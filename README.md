@@ -1,3 +1,2 @@
-Openwater Neuromodulation Software
-
-This is information that is not for release.
+# Openwater Neuromodulation Software
+The README will appear here on release

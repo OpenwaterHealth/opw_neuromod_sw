@@ -1,0 +1,1 @@
+set vsx_activated_pid

@@ -1,0 +1,6 @@
+*.asv
+paths.json
+logs/*.log
++verasonics/activated_pid.txt
++verasonics/vsx_path.txt
++sim/kwave_path.txt

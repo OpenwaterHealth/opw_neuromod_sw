@@ -33,7 +33,7 @@ import fus.util.*
 if ~(nargin==2 || nargin==4)
     error('incorrect number of input arguments')
 end
-if isempty(from_unit)
+if isempty(from_unit) || isequal(from_unit, "")
     scl = 1;
     return
 end

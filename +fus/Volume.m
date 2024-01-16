@@ -48,6 +48,9 @@ classdef Volume < fus.DataClass
                 options.units string {}
             end
             self.data = data;
+            if ~any(coords.length) && length(size(data))==3
+                coords = arrayfun(@(sz, id)fus.Axis(1:sz, id), size(data), ["x","y","z"]);
+            end
             self.coords = coords;
             self.parse_props(options);
             if ~isfield(options, "id") && isfield(options, "name")

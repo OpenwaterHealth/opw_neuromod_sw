@@ -770,11 +770,14 @@ classdef Volume < fus.DataClass
             %
             % Optional Parameters:
             %   'colorbar' (logical): Display colorbar. Default: true
+            %   'colorbar_kwargs' (struct): Colorbar keyword args. Default
+            %       struct with no fields
             %   'title' (logical): Display title. Default: true
             %   'xlabel' (logical): Display xlabel. Default: true
             %   'ylabel' (logical): Display ylabel. Default: true
             %   'xdim' (string): Dimension ID for x-axis. Default: "" (auto)
             %   'ydim' (string): Dimension ID for y-axis. Default: "" (auto)
+            %   'ax' (axes handles): Axes to plot into. Default gca
             %
             % Returns:
             %   h (1,1) handle: Handle to image
@@ -782,11 +785,13 @@ classdef Volume < fus.DataClass
                 self (1,1) fus.Volume
                 clim (1,2) double = self.percentile([0, 1])
                 options.colorbar (1,1) logical = true
+                options.colorbar_kwargs (1,1) struct = struct()
                 options.title (1,1) logical = true
                 options.xlabel (1,1) logical = true
                 options.ylabel (1,1) logical = true
                 options.xdim string {fus.util.mustBeDimOrEmpty(options.xdim, self)} = ""
                 options.ydim string {fus.util.mustBeDimOrEmpty(options.ydim, self)} = ""
+                options.ax (1,1) {fus.util.mustBeAxes} = gca
             end
             [xdim, ydim] = self.get_xy("xdim", options.xdim, "ydim", options.ydim);
             dimi = arrayfun(@self.dim_index, [ydim, xdim]);
@@ -798,25 +803,28 @@ classdef Volume < fus.DataClass
             order = [dimi, order];
             x = self.coords.by_id(xdim);
             y = self.coords.by_id(ydim);
+            ax = options.ax;
             cdata = permute(self.data, order);
             h = imagesc(...
+                ax, ...
                 x.values,...
                 y.values,...
                 cdata, clim);
             if options.xlabel
-                xlabel(fus.util.auto_tex(x.label));
+                xlabel(ax, fus.util.auto_tex(x.label));
             end
             if options.ylabel
-                ylabel(fus.util.auto_tex(y.label));
+                ylabel(ax, fus.util.auto_tex(y.label));
             end
             if options.title
-                title(fus.util.auto_tex(self.name))
+                title(ax, fus.util.auto_tex(self.name))
             end
             if options.colorbar
-                cb = colorbar();
+                cb_kwargs = fus.util.struct2args(options.colorbar_kwargs);
+                cb = colorbar(ax, cb_kwargs{:});
                 ylabel(cb, fus.util.auto_tex(self.units));
             end
-            axis image;
+            axis(ax, 'image');
         end
         
         function data = interp(self, X, Y, Z, options)

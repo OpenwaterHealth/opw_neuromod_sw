@@ -748,7 +748,7 @@ classdef Volume < fus.DataClass
             order(cellfun(@self.dim_index, listed_dims)) = [];
             for i = 1:length(xyzdims)
                 if isempty(xyzdims{i})
-                    xyzdims{i} = self.dims{order(1)};
+                    xyzdims(i) = self.dims(order(1));
                     order(1) = [];
                 end
             end
@@ -1326,16 +1326,17 @@ classdef Volume < fus.DataClass
             end
             dx = (arrayfun(@(x)mean(diff(x.values)), self.coords));
             x0 = arrayfun(@(x)x.values(1), self.coords);
-            affine = ([dx,1].*[self.matrix(:,1:3) self.matrix * [x0(:);1]]).*[-1;-1;1;1];
-            transform = affine3d(affine');
-            switch self.units
+            affine = ([sign(dx),1].*[self.matrix(:,1:3) self.matrix * [x0(:);1]]).*[-1;-1;1;1];
+            switch self.coords.get_units
                 case "mm"
                     spaceunits = 'Millimeter';
                 case "m"
                     spaceunits = 'Meter';
+                    affine(1:3,end) = affine(1:3,end) * 1000;
                 otherwise
                     error("invalid units");
             end
+            transform = affine3d(affine');
             description = sprintf('%s|%s',self.id, self.name);
             if length(description) > 80
                 warning("Length of volume ID + volume Name > 79 characters. Description will be truncated");
@@ -1610,6 +1611,7 @@ classdef Volume < fus.DataClass
                     scl = fus.util.getunitconversion("mm", options.units);
                 case 'Meter'
                     scl = fus.util.getunitconversion("m", options.units);
+                    T(:,1:3) = T(:,1:3)/1000; % T defaults to mm
                 otherwise
                     scl = fus.util.getunitconversion(lower(index.SpaceUnits), options.units);
             end

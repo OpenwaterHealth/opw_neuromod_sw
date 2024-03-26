@@ -188,7 +188,7 @@ classdef Volume < fus.DataClass
                 dim (1,1) string {fus.util.mustBeDim(dim,self)}
                 range (1,2) double
             end
-            coord = self.coords.by_id(dim);
+            coord = self.get_coord(dim);
             idx = find(coord.values>=range(1) & coord.values<=range(2));
             vol = self.isel(dim, idx);
         end
@@ -1116,10 +1116,10 @@ classdef Volume < fus.DataClass
                 self = self.copy();
                 varargout{1} = self;
             end
-            for vol_index = 1:length(self)
+            if ~isequal(self.get_units, units)
+                scl = fus.util.getunitconversion(self.get_units, units);
+                for vol_index = 1:length(self)
                 vol = self(vol_index);
-                if ~isequal(vol.coords.get_units, units)
-                    scl = fus.util.getunitconversion(vol.coords.get_units, units);
                     for i = 1:3
                         vol.coords(i).rescale(units);
                     end

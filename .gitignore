@@ -4,3 +4,4 @@ logs/*.log
 +fus/+sys/verasonics/activated_pid.txt
 +fus/+sys/verasonics/vsx_path.txt
 +fus/sim/kwave_path.txt
++fus/+sys/+verasonics/activated_pid.txt

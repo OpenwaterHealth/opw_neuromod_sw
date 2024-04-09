@@ -85,7 +85,7 @@ function [sim_error, status_msg] = run(config, options)
         end
         [pth, fname, ~] = fileparts(options.filename);
         options.filename = fullfile(pth, sprintf('%s.mat', fname)); % enforce .mat extension
-        repo = fileparts(fileparts(fileparts(mfilename('fullpath'))));
+        repo = fileparts(fileparts(fileparts(fileparts(mfilename('fullpath')))));
         addpath(repo)
         cd(options.vsx_path)
         log.info('Activating %s', options.vsx_path);

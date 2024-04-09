@@ -27,7 +27,7 @@ function kwave_path = get_path(options)
                     kwave_path = choosepath;
                     paths.kwave = kwave_path;
                     if options.save
-                        save_paths(paths);
+                        fus.save_paths(paths);
                     end
                     path_ok = true;
                 end

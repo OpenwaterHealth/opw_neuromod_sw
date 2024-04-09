@@ -18,6 +18,9 @@ classdef Vantage < fus.sys.UltrasoundSystem
                 options.?fus.sys.verasonics.Vantage
             end
             self.parse_props(options);
+            if ~isfolder(self.vsx_path)
+                self.vsx_path = fus.sys.verasonics.get_path;
+            end
         end
         
         function config = setup(self, solution)

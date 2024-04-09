@@ -1930,7 +1930,7 @@ classdef Database < fus.DataClass
                             db_path = choosepath;
                             paths.db = db_path;
                             if options.save
-                                save_paths(paths);
+                                fus.save_paths(paths);
                             end
                             path_ok = true;
                         end

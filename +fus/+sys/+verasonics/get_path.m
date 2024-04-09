@@ -28,7 +28,7 @@ function vsx_path = get_path(options)
                     vsx_path = choosepath;
                     paths.vsx = vsx_path;
                     if options.save
-                        save_paths(paths);
+                        fus.save_paths(paths);
                     end
                     path_ok = true;
                 end

@@ -17,6 +17,7 @@ function [skin_lps, skin_sph, vsph] =  detect_skin(vol, options)
     %   'r_min' (double): Minimum radial distance in mm. Default 0
     %   'r_max' (double): Maximum radial distance in mm. Default 150
     %   'r_spacing' (double): Spacing of radial distances in mm. Default 1
+    %   'medfile' (double): median filter size. Deafult 1
     %   'smooth' (logical): Whether to smooth the skin surface using a bicubic spline. Default false
     %   'smooth_opts' (struct): Options for smoothing. See fus.seg.bicubic_fit. Default struct('n',17,'lower', 50,'upper', 150, 'startpoint', 100, 'robust',true)
     %   'units' (string): Units of radial distance. Default "mm"
@@ -27,7 +28,7 @@ function [skin_lps, skin_sph, vsph] =  detect_skin(vol, options)
     %   skin_lps (cell): Cell array of [x,y,z] coordinates of skin surface in LPS coordinates
     %   skin_sph (cell): Cell array of [th,phi,r] coordinates of skin surface in spherical coordinates
     arguments
-        vol fus.Volume
+        vol (1,1) fus.Volume
         options.skin_thresh (1,1) double {mustBeInRange(options.skin_thresh, 0,1)} = 0.3;
         options.max_percentile (1,1) double {mustBeInRange(options.max_percentile, 0, 1)} = 0.99;
         options.th_min (1,1) double = -180;
@@ -39,6 +40,7 @@ function [skin_lps, skin_sph, vsph] =  detect_skin(vol, options)
         options.r_min (1,1) double = 0;
         options.r_max (1,1) double = 150
         options.r_spacing (1,1) double {mustBePositive} = 1;
+        options.medfilt (1,1) double {mustBeInteger, mustBePositive} = 1;
         options.smooth (1,1) logical = false;
         options.smooth_opts (1,1) struct = struct(...
                 'n',17, ...
@@ -79,6 +81,14 @@ function [skin_lps, skin_sph, vsph] =  detect_skin(vol, options)
     top_skin_raw = r(top_skin_raw_idx(msk));
     top_skin = nan(sz(1:2));
     top_skin(msk) = top_skin_raw;
+    if options.medfilt > 1
+        if any(isnan(top_skin))
+            f = @fus.seg.nanmedfilt2;
+        else
+            f = @(x, sz)medfilt2(x, sz, "symmetric");
+        end
+         top_skin = f(top_skin, options.medfilt*[1,1]);
+    end
     if options.smooth
         options.log.info("Fitting to spline...");
         args = fus.util.struct2args(options.smooth_opts);

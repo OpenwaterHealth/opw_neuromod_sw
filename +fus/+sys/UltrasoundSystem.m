@@ -8,7 +8,8 @@ classdef UltrasoundSystem < fus.DataClass
     methods
         function s = to_struct(self)
             s = to_struct@fus.DataClass(self);
-            s.class = string(class(self)); 
+            classname = string(split(class(self),'.'));
+            s.class = join(classname(3:end),'.'); 
         end
         
         function sys_info = info(self)

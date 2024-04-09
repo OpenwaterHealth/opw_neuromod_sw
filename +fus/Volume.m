@@ -48,6 +48,9 @@ classdef Volume < fus.DataClass
                 options.units string {}
             end
             self.data = data;
+            if ~any(coords.length) && length(size(data))==3
+                coords = arrayfun(@(sz, id)fus.Axis(1:sz, id), size(data), ["x","y","z"]);
+            end
             self.coords = coords;
             self.parse_props(options);
             if ~isfield(options, "id") && isfield(options, "name")
@@ -185,7 +188,7 @@ classdef Volume < fus.DataClass
                 dim (1,1) string {fus.util.mustBeDim(dim,self)}
                 range (1,2) double
             end
-            coord = self.coords.by_id(dim);
+            coord = self.get_coord(dim);
             idx = find(coord.values>=range(1) & coord.values<=range(2));
             vol = self.isel(dim, idx);
         end
@@ -745,7 +748,7 @@ classdef Volume < fus.DataClass
             order(cellfun(@self.dim_index, listed_dims)) = [];
             for i = 1:length(xyzdims)
                 if isempty(xyzdims{i})
-                    xyzdims{i} = self.dims{order(1)};
+                    xyzdims(i) = self.dims(order(1));
                     order(1) = [];
                 end
             end
@@ -767,11 +770,14 @@ classdef Volume < fus.DataClass
             %
             % Optional Parameters:
             %   'colorbar' (logical): Display colorbar. Default: true
+            %   'colorbar_kwargs' (struct): Colorbar keyword args. Default
+            %       struct with no fields
             %   'title' (logical): Display title. Default: true
             %   'xlabel' (logical): Display xlabel. Default: true
             %   'ylabel' (logical): Display ylabel. Default: true
             %   'xdim' (string): Dimension ID for x-axis. Default: "" (auto)
             %   'ydim' (string): Dimension ID for y-axis. Default: "" (auto)
+            %   'ax' (axes handles): Axes to plot into. Default gca
             %
             % Returns:
             %   h (1,1) handle: Handle to image
@@ -779,11 +785,13 @@ classdef Volume < fus.DataClass
                 self (1,1) fus.Volume
                 clim (1,2) double = self.percentile([0, 1])
                 options.colorbar (1,1) logical = true
+                options.colorbar_kwargs (1,1) struct = struct()
                 options.title (1,1) logical = true
                 options.xlabel (1,1) logical = true
                 options.ylabel (1,1) logical = true
                 options.xdim string {fus.util.mustBeDimOrEmpty(options.xdim, self)} = ""
                 options.ydim string {fus.util.mustBeDimOrEmpty(options.ydim, self)} = ""
+                options.ax (1,1) {fus.util.mustBeAxes} = gca
             end
             [xdim, ydim] = self.get_xy("xdim", options.xdim, "ydim", options.ydim);
             dimi = arrayfun(@self.dim_index, [ydim, xdim]);
@@ -795,25 +803,28 @@ classdef Volume < fus.DataClass
             order = [dimi, order];
             x = self.coords.by_id(xdim);
             y = self.coords.by_id(ydim);
+            ax = options.ax;
             cdata = permute(self.data, order);
             h = imagesc(...
+                ax, ...
                 x.values,...
                 y.values,...
                 cdata, clim);
             if options.xlabel
-                xlabel(fus.util.auto_tex(x.label));
+                xlabel(ax, fus.util.auto_tex(x.label));
             end
             if options.ylabel
-                ylabel(fus.util.auto_tex(y.label));
+                ylabel(ax, fus.util.auto_tex(y.label));
             end
             if options.title
-                title(fus.util.auto_tex(self.name))
+                title(ax, fus.util.auto_tex(self.name))
             end
             if options.colorbar
-                cb = colorbar();
+                cb_kwargs = fus.util.struct2args(options.colorbar_kwargs);
+                cb = colorbar(ax, cb_kwargs{:});
                 ylabel(cb, fus.util.auto_tex(self.units));
             end
-            axis image;
+            axis(ax, 'image');
         end
         
         function data = interp(self, X, Y, Z, options)
@@ -1105,10 +1116,10 @@ classdef Volume < fus.DataClass
                 self = self.copy();
                 varargout{1} = self;
             end
-            for vol_index = 1:length(self)
+            if ~isequal(self.get_units, units)
+                scl = fus.util.getunitconversion(self.get_units, units);
+                for vol_index = 1:length(self)
                 vol = self(vol_index);
-                if ~isequal(vol.coords.get_units, units)
-                    scl = fus.util.getunitconversion(vol.coords.get_units, units);
                     for i = 1:3
                         vol.coords(i).rescale(units);
                     end
@@ -1315,16 +1326,17 @@ classdef Volume < fus.DataClass
             end
             dx = (arrayfun(@(x)mean(diff(x.values)), self.coords));
             x0 = arrayfun(@(x)x.values(1), self.coords);
-            affine = ([dx,1].*[self.matrix(:,1:3) self.matrix * [x0(:);1]]).*[-1;-1;1;1];
-            transform = affine3d(affine');
-            switch self.units
+            affine = ([sign(dx),1].*[self.matrix(:,1:3) self.matrix * [x0(:);1]]).*[-1;-1;1;1];
+            switch self.coords.get_units
                 case "mm"
                     spaceunits = 'Millimeter';
                 case "m"
                     spaceunits = 'Meter';
+                    affine(1:3,end) = affine(1:3,end) * 1000;
                 otherwise
                     error("invalid units");
             end
+            transform = affine3d(affine');
             description = sprintf('%s|%s',self.id, self.name);
             if length(description) > 80
                 warning("Length of volume ID + volume Name > 79 characters. Description will be truncated");
@@ -1599,6 +1611,7 @@ classdef Volume < fus.DataClass
                     scl = fus.util.getunitconversion("mm", options.units);
                 case 'Meter'
                     scl = fus.util.getunitconversion("m", options.units);
+                    T(:,1:3) = T(:,1:3)/1000; % T defaults to mm
                 otherwise
                     scl = fus.util.getunitconversion(lower(index.SpaceUnits), options.units);
             end

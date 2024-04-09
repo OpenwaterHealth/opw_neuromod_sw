@@ -37,7 +37,7 @@ function defaced_vol = deface(vol, options)
     defaced_vol.rescale(options.units);
     X = defaced_vol.ndgrid('transform', true);    
     R = vecnorm(cell2mat(reshape(X,1,1,1,[])),2,4);
-    defaced_vol.data(R>130) = nan;
+    defaced_vol.data(R>options.radius) = nan;
     if ~isfield(options, "nasion")
         edges = defaced_vol.get_edges("transform", true);
         p_min = min(edges{2},[],'all');

@@ -27,7 +27,7 @@ function [skin_lps, skin_sph, vsph] =  detect_skin(vol, options)
     %   skin_lps (cell): Cell array of [x,y,z] coordinates of skin surface in LPS coordinates
     %   skin_sph (cell): Cell array of [th,phi,r] coordinates of skin surface in spherical coordinates
     arguments
-        vol fus.Volume
+        vol (1,1) fus.Volume
         options.skin_thresh (1,1) double {mustBeInRange(options.skin_thresh, 0,1)} = 0.3;
         options.max_percentile (1,1) double {mustBeInRange(options.max_percentile, 0, 1)} = 0.99;
         options.th_min (1,1) double = -180;

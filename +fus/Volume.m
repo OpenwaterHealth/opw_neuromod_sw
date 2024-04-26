@@ -704,8 +704,8 @@ classdef Volume < fus.DataClass
                 order = order(nonsingleton);
             end 
             for i = 1:length(xydims)
-                if isempty(xydims{i})
-                    xydims{i} = self.dims{order(1)};
+                if xydims(i) == ""
+                    xydims(i) = self.dims(order(1));
                     order(1) = [];
                 end
             end
@@ -747,7 +747,7 @@ classdef Volume < fus.DataClass
             order = 1:self.ndim;
             order(cellfun(@self.dim_index, listed_dims)) = [];
             for i = 1:length(xyzdims)
-                if isempty(xyzdims{i})
+                if xyzdims(i) == ""
                     xyzdims(i) = self.dims(order(1));
                     order(1) = [];
                 end

@@ -225,6 +225,7 @@ classdef Scene < fus.DataClass
             %       transformed scene. Default: 1
             %   'units' (1,1) string: The units of the transformed scene.
             %       Default: "mm"
+            %   'method' (string): interpolation method for interpn. Default "linear".
             %
             % Returns:
             %   scene (1,1) fus.Scene: The transformed scene.
@@ -232,11 +233,12 @@ classdef Scene < fus.DataClass
                 self fus.Scene
                 options.dx (1,1) = 1
                 options.units (1,1) string {fus.util.mustBeDistance} = "mm"
+                options.method (1,1) string {mustBeMember(options.method, ["linear", "nearest", "spline", "cubic", "makima"])} = "linear"
             end
             x_vecs = cellfun(@(x)[min(x(:)):options.dx:max(x(:))],self.volumes.get_edges("transform",true, "units",options.units),'UniformOutput',false);
             coords_lps = cellfun(@(x,id)fus.Axis(x, id, 'units', options.units), x_vecs, {'L','P','S'});
             matrix = eye(4);
-            scene = self.transform(coords_lps, matrix);
+            scene = self.transform(coords_lps, matrix, "method", options.method);
         end
         
         function scene = transform(self, coords, matrix, options)
@@ -256,6 +258,7 @@ classdef Scene < fus.DataClass
             %       transformed scene. Default: self.id
             %   'name' (1,1) string: The name of the transformed scene.
             %       Default: self.name
+            %   'method' (string): interpolation method for interpn. Default "linear".
             %
             % Returns:
             %   scene (1,1) fus.Scene: The transformed scene.
@@ -265,8 +268,9 @@ classdef Scene < fus.DataClass
                 matrix (4,4) double
                 options.id (1,1) string {mustBeValidVariableName} = self.id
                 options.name (1,1) string = self.name
+                options.method (1,1) string {mustBeMember(options.method, ["linear", "nearest", "spline", "cubic", "makima"])} = "linear"
             end
-            transform_volumes = self.volumes.transform(coords, matrix);
+            transform_volumes = self.volumes.transform(coords, matrix, "method", options.method);
             transform_targets = self.targets.transform(matrix, "dims", [coords.id], "units", coords.get_units);
             transform_markers = self.markers.transform(matrix, "dims", [coords.id], "units", coords.get_units);
             transform_array = self.transducer.transform(matrix, "units", coords.get_units);

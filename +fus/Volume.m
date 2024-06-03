@@ -841,6 +841,7 @@ classdef Volume < fus.DataClass
             % Optional Parameters:
             %   'transform' (logical): transform data for X,Y,Z provided in global coordinates. Default: false
             %   'units' (string): Units of input coordinates. Default: self.units
+            %   'method' (string): interpolation method for interpn. Default "linear".
             %
             % Returns:
             %   data (size(X), size(Y), size(Z)) double: Interpolated data
@@ -851,6 +852,7 @@ classdef Volume < fus.DataClass
                 Z double
                 options.transform (1,1) logical = false
                 options.units (1,1) string = self.get_units
+                options.method (1,1) string {mustBeMember(options.method, ["linear", "nearest", "spline", "cubic", "makima"])} = "linear"
             end
             XYZ = {X,Y,Z};
             if options.transform
@@ -864,9 +866,9 @@ classdef Volume < fus.DataClass
             end
             Xv = self.ndgrid("units", options.units);
             if numel(self)>1
-                data = arrayfun(@(x)interpn(Xv{:}, double(x.data), XYZ{:}), self, "UniformOutput", false);
+                data = arrayfun(@(x)interpn(Xv{:}, double(x.data), XYZ{:}, options.method), self, "UniformOutput", false);
             else
-                data = interpn(Xv{:}, double(self.data), XYZ{:});
+                data = interpn(Xv{:}, double(self.data), XYZ{:}, options.method);
             end
         end
         
@@ -1158,7 +1160,7 @@ classdef Volume < fus.DataClass
             end
         end
         
-        function h = slice(self, x, y, z, options)
+        function [h, cbax] = slice(self, x, y, z, options)
             % SLICE Plot Volume cross-sections
             % h = vol.slice(x, y, z)
             % h = vol.slice(x, y, z, "param", value,...)
@@ -1188,9 +1190,15 @@ classdef Volume < fus.DataClass
                 y (1,:) double
                 z (1,:) double
                 options.cmap {fus.util.mustBeStringOrColorMapper} = "turbo"
-                options.colorbar (1,1) logical = true
                 options.ax {fus.util.mustBeAxes} = gca % Existing axes
                 options.transform (1,1) logical = false % Transform to global coordinates
+                options.colorbar (1,1) logical = true
+                options.colorbar_index double {mustBeInteger} = 1 % fus.Volume index to use for colobar
+                options.colorbar_ax = [] % Existing colorbar axes
+                options.colorbar_width double {mustBeNumeric, mustBePositive} = 0.05 %Relative width of colorbar axis
+                options.colorbar_range double {mustBeNumeric} = [] % Colorbar extent
+                options.outline = "None" % Controls EdgeColor
+                options.legend_format string = "%g" % Format for legend numbers
             end
             if isa(options.cmap, "fus.ColorMapper")
                 cmap = options.cmap;
@@ -1199,15 +1207,14 @@ classdef Volume < fus.DataClass
             end
             slices = {x,y,z};
             h = [];
+            args = fus.util.struct2args(rmfield(options, "cmap"));
             for i = 1:3
                 dim = self.dims(i);
                 v = self.sel(dim, slices{i});
-                h = [h, v.draw_surface(...
+                [h(i), cbax] = v.draw_surface(...
                     cmap, ...
                     "dim", dim, ...
-                    "ax", options.ax, ...
-                    "transform", options.transform, ...
-                    "colorbar", options.colorbar)];
+                    args{:});
                 hold all
             end
             axis(options.ax, 'equal');
@@ -1376,7 +1383,7 @@ classdef Volume < fus.DataClass
             niftiwrite(self.data, filename, metadata);
         end
         
-        function obj = transform(self, coords, matrix)
+        function obj = transform(self, coords, matrix, options)
             % TRANSFORM Transform Volume
             % obj = vol.transform(coords, matrix)
             %
@@ -1388,12 +1395,16 @@ classdef Volume < fus.DataClass
             %       transform to.
             %   matrix (4,4) double: Transformation matrix (in the coords units)
             %
+            % Optional Parameters:
+            %   'method' (string): interpolation method for interpn. Default "linear".
+            %
             % Returns:
             %   obj (fus.Volume): Transformed Volume
             arguments
                 self fus.Volume
                 coords (1,3) fus.Axis
                 matrix (4,4) double
+                options.method (1,1) string {mustBeMember(options.method, ["linear", "nearest", "spline", "cubic", "makima"])} = "linear"
             end
             switch numel(self)
                 case 0
@@ -1409,7 +1420,7 @@ classdef Volume < fus.DataClass
                     X1 = mat2cell(X1, ones(size(X1,1),1), size(X1,2));
                     X1 = X1(1:end-1);
                     X1 = cellfun(@(x)reshape(x,size(Xp{1})), X1, 'UniformOutput', false);
-                    pdata = self.interp(X1{:});
+                    pdata = self.interp(X1{:}, "method", options.method);
                     obj = self.newobj(pdata, coords, ...
                         "id", self.id, ...
                         "name", self.name, ...
@@ -1418,7 +1429,8 @@ classdef Volume < fus.DataClass
                         "units", self.units);
                     self.rescale(prev_units);
                 otherwise
-                    obj = arrayfun(@(x)x.transform(coords, matrix), self);
+                    args  = fus.util.struct2args(options);
+                    obj = arrayfun(@(x)x.transform(coords, matrix, args{:}), self);
             end
         end
     end

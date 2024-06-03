@@ -91,6 +91,23 @@ classdef Solution < fus.DataClass
             i_ta_mWcm2 = isppa_avg*pulsetrain_dutycycle*treatment_dutycycle*1e3;
             for focus_index = 1:self.num_foci
                 foc = self.focus(focus_index);
+                if ~any(self.apodizations(focus_index,:))
+                    analysis.mainlobe_pnp_MPa(focus_index) = 0;
+                    analysis.mainlobe_isppa_Wcm2(focus_index) = 0;
+                    analysis.mainlobe_ispta_mWcm2(focus_index) = 0;
+                    analysis.beamwidth_lat_3dB_mm = nan;
+                    analysis.beamwidth_ax_3dB_mm = nan;
+                    analysis.beamwidth_lat_6dB_mm = nan;
+                    analysis.beamwidth_ax_6dB_mm = nan;
+                    analysis.sidelobe_pnp_MPa(focus_index) = 0;
+                    analysis.sidelobe_isppa_Wcm2(focus_index) = 0;
+                    analysis.global_pnp_MPa(focus_index) = 0;
+                    analysis.global_isppa_Wcm2(focus_index) = 0;
+                    analysis.p0_Pa(focus_index) = 0;
+                    power_W(focus_index) = 0;
+                    TIC(focus_index) = 0;
+                    continue
+                end
                 for i = 1:self.transducer.numelements
                     apod_signal = input_signal*self.apodizations(focus_index, i);
                     output_signal{i} = self.transducer.elements(i).calc_output(apod_signal, dt);

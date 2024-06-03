@@ -95,7 +95,7 @@ classdef Plan < fus.DataClass
                 options.target_id (1,:) string {mustBeValidVariableName} = scene.targets.all_ids
                 options.simulate (1,1) logical = true
                 options.scale_solution (1,1) logical = true
-                options.sim_options (1,1) struct = self.sim_setup.options
+                options.sim_options (1,1) struct = struct()
                 options.analysis_options (1,1) struct = self.analysis_options
                 options.on_pulse_mismatch (1,1) string {mustBeMember(options.on_pulse_mismatch, ["error", "round", "roundup", "rounddown"])} = "error"
                 options.progressbar (1,1) logical = true
@@ -159,8 +159,13 @@ classdef Plan < fus.DataClass
                 if nargout < 2
                     log.warning("Simulation was requested, but no output is assigned. Use [solution, output] = plan.simulate(... to capture simulation output");
                 end
+                sim_options = struct(...
+                    "dt", self.sim_setup.dt, ...
+                    "t_end", self.sim_setup.t_end);
+                sim_options = fus.util.merge_struct(sim_options, self.sim_setup.options, "add");
+                sim_options = fus.util.merge_struct(sim_options, options.sim_options, "add");
                 output = solution.simulate(scene.volumes, ...
-                    "sim_options", options.sim_options, ...
+                    "sim_options", sim_options, ...
                     "analysis_options", options.analysis_options, ...
                     "progressbar", options.progressbar, ...
                     "parent", options.figure);

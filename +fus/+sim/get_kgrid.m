@@ -32,9 +32,11 @@ function kgrid = get_kgrid(params, varargin)
         array_size(1), dx(1), ...
         array_size(2), dx(2), ...
         array_size(3), dx(3));
-    if ~any(options.dt) || ~any(options.t_end)
+    if ~any(options.dt)
         kgrid.makeTime(options.sound_speed_ref);
-    else
+        options.dt = kgrid.dt;
+    end
+    if any(options.t_end)
         Nt = round(options.t_end/options.dt);
         kgrid.setTime(Nt, options.dt)
     end

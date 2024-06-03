@@ -33,6 +33,24 @@ function res = get_beamwidth(vol, focus, cutoff, options)
                 dx = mean(diff([coords.extent{:}])./(coords.length-1));        
                 inlier_points = cellfun(@(x)x+(rand(size(x))-0.5)*dx/2, inlier_points, 'UniformOutput', false);
                 inlier_hull = convhull(inlier_points{:},"simplify", options.simplify_hulls);
+            case 'MATLAB:convhull:NotEnoughPtsConvhullErrId'
+                    res = struct(...
+                        "dims", options.dims, ...
+                        "beamwidth", nan, ...
+                        "units", options.units);
+                    if options.masks
+                        res.inlier_mask = nan;
+                        res.fit_mask = nan;
+                    end
+                    if options.points || options.hulls
+                        res.inlier_points = nan;
+                        res.fit_points = nan;
+                    end
+                    if options.hulls
+                        res.inlier_hull = nan;
+                        res.fit_hull = nan;
+                    end
+                    return
             otherwise
                 rethrow(me)
         end

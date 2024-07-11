@@ -7,13 +7,23 @@ classdef DataClass < handle
     %   allows for objects to contain and operate on reasonably large
     %   volumetric datasets without bloating memory usage. 
     methods
-        function s = to_struct(obj, varargin)
+        function s = to_struct(obj, options)
             % TO_STRUCT convert DATACLASS to struct
             % s = TO_STRUCT(obj)
             % TO_STRUCT recursively convert a DataClass and all of its
             % properties into a struct. Certain subclasses may use
             % altervative versions of this conversion to handle specific
             % properties differently.
+            %
+            % INPUTS:
+            %   obj: object
+            % OPTIONAL PARAMTER-VALUE PAIRS
+            %   datefmt (1,1) string. Format for parsing datetime objects.
+            %       Default is "yyyy-mm-dd HH:MM:SS"
+            arguments
+                obj
+                options.datefmt (1,1) string = "yyyy-mm-dd HH:MM:SS"
+            end
             if numel(obj) > 1
                 s = arrayfun(@(x)x.to_struct(), obj);
                 return
@@ -36,6 +46,8 @@ classdef DataClass < handle
                 catch
                     if ~isempty(vdx) && ~isempty(vdx.Class) && vdx.Class.Name=="string" && any(arrayfun(@(x) isa(x, "meta.UnrestrictedDimension"), [vdx.Size]))
                         s.(propname) = cellstr(prop);
+                    elseif isa(prop, "datetime")
+                        s.(propname) = datestr(prop, options.datefmt);
                     else
                         s.(propname) = prop;
                     end

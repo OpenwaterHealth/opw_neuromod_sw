@@ -19,14 +19,26 @@ classdef DataClass < handle
                 return
             end
             s = struct();
+            if isempty(obj)
+                s = struct.empty;
+                return
+            end
             propnames = properties(obj);
+            cls = metaclass(obj);
+            clsprops = string({cls.PropertyList.Name});
             for i = 1:length(propnames)
                 propname = propnames{i};
+                p = cls.PropertyList(find(propname == clsprops));
+                vdx = p.Validation;
                 prop = [obj.(propname)];
                 try
                     s.(propname) = prop.to_struct();
                 catch
-                    s.(propname) = prop;
+                    if ~isempty(vdx) && ~isempty(vdx.Class) && vdx.Class.Name=="string" && any(arrayfun(@(x) isa(x, "meta.UnrestrictedDimension"), [vdx.Size]))
+                        s.(propname) = cellstr(prop);
+                    else
+                        s.(propname) = prop;
+                    end
                 end
             end
         end

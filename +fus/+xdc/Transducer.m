@@ -2,8 +2,8 @@ classdef Transducer < fus.DataClass
     %Transducer transducer array
     %  array = Transducer("param", value, ...)
     properties
-        id string = "transducer" % Transducer ID
-        name string = "" % Transducer Name
+        id (1,1) string = "transducer" % Transducer ID
+        name (1,1) string = "" % Transducer Name
         elements (1,:) fus.xdc.Element % Element array
         frequency (1,1) double {mustBePositive} = 400.6e3; % Nominal center frequency
         units (1,1) string {fus.util.mustBeDistance} = "m" % Spatial units

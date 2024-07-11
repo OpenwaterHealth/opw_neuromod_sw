@@ -1854,7 +1854,7 @@ classdef Database < fus.DataClass
                 self fus.Database
                 plan_ids (1,:) string {mustBeValidVariableName}
             end
-            plan_data = struct('plan_ids', plan_ids);
+            plan_data = struct('plan_ids', {cellstr(plan_ids)});
             plans_filename = self.get_plans_filename();
             fus.util.struct2json(plan_data, plans_filename);
         end
@@ -1865,7 +1865,7 @@ classdef Database < fus.DataClass
                 subject_id (1,1) string {mustBeValidVariableName}
                 session_ids (1,:) string {mustBeValidVariableName}
             end
-            session_data = struct('session_ids', session_ids);
+            session_data = struct('session_ids', {cellstr(session_ids)});
             sessions_filename = self.get_sessions_filename(subject_id);
             fus.util.struct2json(session_data, sessions_filename);
         end
@@ -1875,7 +1875,7 @@ classdef Database < fus.DataClass
                 self fus.Database
                 subject_ids (1,:) string {mustBeValidVariableName}
             end
-            subject_data = struct('subject_ids', subject_ids);
+            subject_data = struct('subject_ids', {cellstr(subject_ids)});
             subjects_filename = self.get_subjects_filename();
             fus.util.struct2json(subject_data, subjects_filename);
         end
@@ -1885,7 +1885,7 @@ classdef Database < fus.DataClass
                 self fus.Database
                 transducer_ids (1,:) string {mustBeValidVariableName}
             end
-            transducers_data = struct('transducer_ids', transducer_ids);
+            transducers_data = struct('transducer_ids', {cellstr(transducer_ids)});
             transducers_filename = self.get_transducers_filename();
             fus.util.struct2json(transducers_data, transducers_filename);
         end

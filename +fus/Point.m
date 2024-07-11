@@ -323,7 +323,7 @@ classdef Point < fus.DataClass
             if numel(s) > 1
                 p = arrayfun(@fus.Point.from_struct, s);
             else
-                if isempty(s.id)
+                if isempty(s) || isempty(s.id)
                     p = fus.Point.empty;
                 else
                     args = fus.util.struct2args(s);
